@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>票类列表</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="../../css/oksub.css">
+    <script type="text/javascript" src="../../lib/loading/okLoading.js"></script>
+</head>
+<body>
+<div class="ok-body">
+    <!--模糊搜索区域-->
+    <div class="layui-row">
+        <form class="layui-form ok-search-form">
+            <div class="layui-form-item">
+                <div class="layui-inline">
+                    <div class="layui-input-inline">
+                        <input type="text" class="layui-input" placeholder="开始日期" autocomplete="off" id="startTime"
+                               name="startTime">
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <div class="layui-input-inline">
+                        <input type="text" class="layui-input" placeholder="截止日期" autocomplete="off" id="endTime"
+                               name="endTime">
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <div class="layui-input-inline">
+                        <input type="text" class="layui-input" placeholder="请输入门票名称" autocomplete="off"
+                               name="ticketName">
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <div class="layui-input-inline">
+                        <select name="sellStatus" autocapitalize="off" lay-verify="">
+                            <option value="">请选择售卖状态,默认已售卖</option>
+                            <option value="0">未售卖</option>
+                            <option value="1" selected="">已售卖</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <div class="layui-input-inline">
+                        <button class="layui-btn" lay-submit="" lay-filter="search">
+                            <i class="layui-icon layui-icon-search"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    <!--数据表格-->
+    <table class="layui-hide" id="tableId" lay-filter="tableFilter"></table>
+</div>
+<!--js逻辑-->
+<script src="../../lib/layui/layui.js"></script>
+<script>
+    /** 初始化操作 */
+    layui.use(["element", "table", "form", "laydate", "okLayer", "okUtils", "okMock", "upload", "okNprogress"], function () {
+        let element = layui.element;
+        let table = layui.table;
+        let form = layui.form;
+        let util = layui.util;
+        let laydate = layui.laydate;
+        let okLayer = layui.okLayer;
+        let okUtils = layui.okUtils;
+        let okMock = layui.okMock;
+        let $ = layui.jquery;
+        let upload = layui.upload;
+        let okNprogress = layui.okNprogress;
+        okLoading.close();
+        util.fixbar({});
+
+        /** 时间范围选择器,并处理筛选 */
+        let startTime = laydate.render({
+            elem: "#startTime",
+            type: "date",
+            calendar: true,
+            done: function (value, date) {
+                endTime.config.min = {
+                    year: date.year,
+                    month: date.month - 1, // 关键
+                    date: date.date + 1
+                };
+            }
+        });
+        let endTime = laydate.render({
+            elem: "#endTime",
+            type: "date",
+            calendar: true,
+            done: function (value, date) {
+                startTime.config.max = {
+                    year: date.year,
+                    month: date.month - 1, // 关键
+                    date: date.date - 1
+                };
+            }
+        });
+
+        /** 数据列表 */
+        let articleTable = table.render({
+            title: "票类清单",
+            elem: "#tableId",
+            url: okMock.api.listBbs,
+            method: 'post', // 自定义HTTP类型
+            limit: 20,
+            page: true,
+            even: true,
+            totalRow: true, // 开启合计
+            toolbar: "#toolbarTpl",
+            size: "sm",
+            cols: [[
+                {type: "checkbox", fixed: "left"},
+                {field: "ticketName", title: "门票名称", align: "center", width: 120, totalRowText: '合计'},
+                {field: "ticketDate", title: "门票日期", align: "center", width: 120, templet: "#brandTpl"},
+                {field: "ticketPrice", title: "门票价格", align: "center", width: 100},
+                {field: "number", title: "数量", align: "center", width: 100, totalRow: true},
+                {field: "buyTicketPrice", title: "进票价", width: 100, totalRow: true},
+                {field: "sellTicketPrice", title: "卖票价", width: 100, totalRow: true},
+                {field: "freight", title: "运费", width: 100},
+                {
+                    field: "profit",
+                    title: "利润",
+                    width: 100,
+                    align: "center",
+                    sort: true,
+                    totalRow: true,
+                    templet: "#profitTpl"
+                },
+                {field: "sellStatus", title: "售卖状态", width: 120, align: "center", templet: "#sellStatusTpl"},
+                {field: "createTime", title: "创建时间", width: 120, templet: "#timeTpl"},
+                {field: "updateTime", title: "更新时间", width: 180},
+                {field: "memo", title: "备注", width: 200},
+                {title: "操作", width: 100, align: "center", fixed: "right", templet: "#operationTpl"}
+            ]],
+            done: function (res, curr, count) {
+                // console.log(res, curr, count)
+            }
+        });
+
+        /** 条件筛选区 时间&类型 */
+        form.on("submit(search)", function (data) {
+            // console.log(data.field);
+            articleTable.reload({
+                where: data.field,
+                page: {curr: 1}
+            });
+            return false;
+        });
+
+        /** 表格监听 --> 头工具栏 */
+        table.on("toolbar(tableFilter)", function (obj) {
+            switch (obj.event) {
+                /*case "batchEnabled":
+                    batchEnabled();
+                    break;*/
+                case "batchDisabled":
+                    batchDisabled();
+                    break;
+                case "batchDel":
+                    batchDel();
+                    break;
+                case "add":
+                    add();
+                    break;
+            }
+        });
+
+        /** 表格监听 --> 行工具栏 */
+        table.on("tool(tableFilter)", function (obj) {
+            let data = obj.data;
+            switch (obj.event) {
+                case "edit":
+                    edit(data.ticketId);
+                    break;
+                case "del":
+                    del(data.ticketId);
+                    break;
+            }
+        });
+
+        /** 文件上传 已售*/
+        let uploadInst = upload.render({
+            elem: '#uploadBtn',
+            url: okUtils.baseUrl + '/fileUpload/uploadExecl',
+            method: 'POST',
+            accept: 'file', //普通文件
+            exts: 'xls|xlsx',
+            data: {flag: "ticket", status: 1},
+            done: function (res) {
+                okNprogress.start(); // 进度条组件
+                //上传成功
+                if (res.code == 200) {
+                    okUtils.tableSuccessMsg(res.message + ",并更新了" + res.data + "条!");
+                    okNprogress.done();
+                    // articleTable.reload();
+                } else {
+                    //上传失败
+                    okUtils.tableErrorMsg(res.message);
+                    okNprogress.done();
+                }
+            },
+            error: function () {
+                //失败状态，并实现重传
+                let updText = $('#updText');
+                updText.html('<span style="color: #FF5722;">上传失败</span> <a class="layui-btn layui-btn-xs upd-reload">重试</a>');
+                updText.find('.upd-reload').on('click', function () {
+                    uploadInst.upload();
+                });
+            }
+        });
+        /** 文件上传 未售*/
+        upload.render({
+            elem: '#uploadNo',
+            url: okUtils.baseUrl + '/fileUpload/uploadExecl',
+            method: 'POST',
+            accept: 'file', //普通文件
+            exts: 'xls|xlsx',
+            data: {flag: "ticket", status: 0},
+            done: function (res) {
+                okNprogress.start(); // 进度条组件
+                //上传成功
+                if (res.code == 200) {
+                    okUtils.tableSuccessMsg(res.message + ",并更新了" + res.data + "条!");
+                    okNprogress.done();
+                } else {
+                    //上传失败
+                    okUtils.tableErrorMsg(res.message);
+                }
+            }
+        });
+
+        /** 下载模版 */
+        function batchDisabled() {
+            okLayer.confirm("确定要下载模版吗？", function (index) {
+                layer.close(index);
+                // 模拟表单提交同步方式下载文件
+                // 能够弹出保存文件对话框
+                let url = okUtils.baseUrl + "/fileUpload/downloadExeclTemplate";
+                let form = $("<form></form>").attr("action", url).attr("method", "get");
+                form.append($("<input></input>").attr("type", "hidden").attr("name", "flag").attr("value", "ticket"));
+                form.appendTo('body').submit().remove();
+            });
+        }
+
+        /** 批量删除 */
+        function batchDel() {
+            okLayer.confirm("确定要批量删除吗？", function (index) {
+                layer.close(index);
+                var idsStr = okUtils.tableBatchCheck(table, "ticketId");
+                if (idsStr) {
+                    okUtils.ajax("/billTicket/delete", "post", {id: idsStr}, true).done(function (response) {
+                        // console.log(response);
+                        okUtils.tableSuccessMsg(response.message + ",并删除了" + response.data + "条!");
+                    }).fail(function (error) {
+                        // console.log(error)
+                    });
+                }
+            });
+        }
+
+        /** 添加 编辑 删除 */
+        function add() {
+            okLayer.open("添加帖子", "bbs-add.html", "90%", "90%", null, function () {
+                articleTable.reload();
+            })
+        }
+
+        function edit(id) {
+            window.id = id; //id 是需要传递的数
+            okLayer.open("编辑帖子", "bbs-edit.html?id=" + id, "90%", "90%", null, function () {
+                articleTable.reload();
+            })
+        }
+
+        function del(id) {
+            okLayer.confirm("确定要删除吗？", function () {
+                okUtils.ajax("/billTicket/delete", "post", {id: id}, true).done(function (response) {
+                    okUtils.tableSuccessMsg(response.message);
+                }).fail(function (error) {
+                    console.log(error);
+                });
+            })
+        }
+    })
+</script>
+<!-- 头工具栏模板 -->
+<script type="text/html" id="toolbarTpl">
+    <div class="layui-btn-container">
+        <button class="layui-btn layui-btn-sm layui-btn-warm" lay-event="batchDisabled">下载模版</button>
+        <button class="layui-btn layui-btn-sm layui-btn-normal" id="uploadBtn" lay-event="batchEnabled">
+            <i class="layui-icon">&#xe67c;</i>上传文件-已售
+            <p id="updText"></p>
+        </button>
+        <button class="layui-btn layui-btn-sm layui-btn-danger" lay-event="batchDel">批量删除</button>
+        <button class="layui-btn layui-btn-sm" lay-event="add">添加数据</button>
+        <button class="layui-btn layui-btn-sm layui-btn-primary" id="uploadNo" lay-event="batchEnabled">
+            <i class="layui-icon">&#xe67c;</i>上传文件-未售
+        </button>
+    </div>
+</script>
+<!--售卖状态模版 0 未售卖 1 已售卖 -->
+<script type="text/html" id="sellStatusTpl">
+    {{#  if(d.sellStatus == true){ }}
+    <span class="layui-btn layui-btn-normal layui-btn-xs">已售卖</span>
+    {{#  } else if(d.sellStatus == false) { }}
+    <span class="layui-btn layui-btn-warm layui-btn-xs">未售卖</span>
+    {{#  } }}
+</script>
+<!-- 行工具栏模板 -->
+<script type="text/html" id="operationTpl">
+    <a href="javascript:" title="编辑" lay-event="edit">
+        <i class="ok-icon" style="font-size:1.5em;color: green">&#xe649;</i>
+    </a>
+    <a href="javascript:" title="删除" lay-event="del">
+        <i class="ok-icon" style="font-size:1.5em;color: red">&#xe6b4;</i>
+    </a>
+</script>
+
+<script type="text/html" id="brandTpl">
+    {{d.ticketDate.substr(0,4)+"年"+d.ticketDate.substr(6,6)+"月"+d.ticketDate.substr(6,8)+"日"}}
+</script>
+
+<!--利润模版 小于0标红-->
+<script type="text/html" id="profitTpl">
+    {{#  if(d.profit < 0){ }}
+    <span style="color: #ff0000;">{{ d.profit }}</span>
+    {{#  } else { }}
+    {{ d.profit }}
+    {{#  } }}
+</script>
+<!--时间模版 截取到日-->
+<script type="text/html" id="timeTpl">
+    {{ d.createTime.substr(0,10) }}
+</script>
+</body>
+</html>

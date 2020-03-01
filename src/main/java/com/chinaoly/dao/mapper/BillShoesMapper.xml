@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chinaoly.dao.BillShoesMapper" >
+
+<resultMap id="BaseResultMap" type="com.chinaoly.Model.BillShoes" >
+
+	<result column="SHOES_ID"  property="shoesId"/>
+	<result column="MODEL"  property="model"/>
+	<result column="BRAND_TYPE"  property="brandType"/>
+	<result column="SHOE_SIZE"  property="shoeSize"/>
+	<result column="NUMBER"  property="number"/>
+	<result column="TOTAL_BUY_PRICE"  property="totalBuyPrice"/>
+	<result column="TOTAL_SALES_PRICE"  property="totalSalesPrice"/>
+	<result column="FREIGHT"  property="freight"/>
+	<result column="SERVICE_CHARGE"  property="serviceCharge"/>
+	<result column="DEPOSIT"  property="deposit"/>
+	<result column="PROFIT"  property="profit"/>
+	<result column="DEDUCT"  property="deduct"/>
+	<result column="SELL_STATUS"  property="sellStatus"/>
+	<result column="EFFECT_FLAG"  property="effectFlag"/>
+	<result column="CREATE_TIME"  property="createTime"/>
+	<result column="UPDATE_TIME"  property="updateTime"/>
+	<result column="MEMO"  property="memo"/>
+</resultMap>
+
+<sql id="Base_Column_List" >
+ 	<trim suffixOverrides="," >
+	 	billShoes.SHOES_ID,
+	 	billShoes.MODEL,
+	 	billShoes.BRAND_TYPE,
+	 	billShoes.SHOE_SIZE,
+	 	billShoes.NUMBER,
+	 	billShoes.TOTAL_BUY_PRICE,
+	 	billShoes.TOTAL_SALES_PRICE,
+	 	billShoes.FREIGHT,
+	 	billShoes.SERVICE_CHARGE,
+	 	billShoes.DEPOSIT,
+	 	billShoes.PROFIT,
+	 	billShoes.DEDUCT,
+	 	billShoes.SELL_STATUS,
+	 	billShoes.EFFECT_FLAG,
+	 	billShoes.CREATE_TIME,
+	 	billShoes.UPDATE_TIME,
+	 	billShoes.MEMO,
+	</trim>
+</sql>
+
+<!-- *************************************自定义接口***************************************************** -->
+
+</mapper>   

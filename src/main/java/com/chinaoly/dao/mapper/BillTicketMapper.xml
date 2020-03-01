@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chinaoly.dao.BillTicketMapper" >
+
+<resultMap id="BaseResultMap" type="com.chinaoly.Model.BillTicket" >
+
+	<result column="TICKET_ID"  property="ticketId"/>
+	<result column="TICKET_NAME"  property="ticketName"/>
+	<result column="TICKET_DATE"  property="ticketDate"/>
+	<result column="TICKET_PRICE"  property="ticketPrice"/>
+	<result column="NUMBER"  property="number"/>
+	<result column="BUY_TICKET_PRICE"  property="buyTicketPrice"/>
+	<result column="SELL_TICKET_PRICE"  property="sellTicketPrice"/>
+	<result column="FREIGHT"  property="freight"/>
+	<result column="PROFIT"  property="profit"/>
+	<result column="SELL_STATUS"  property="sellStatus"/>
+	<result column="EFFECT_FLAG"  property="effectFlag"/>
+	<result column="CREATE_TIME"  property="createTime"/>
+	<result column="UPDATE_TIME"  property="updateTime"/>
+	<result column="MEMO"  property="memo"/>
+</resultMap>
+
+<sql id="Base_Column_List" >
+ 	<trim suffixOverrides="," >
+	 	billTicket.TICKET_ID,
+	 	billTicket.TICKET_NAME,
+	 	billTicket.TICKET_DATE,
+	 	billTicket.TICKET_PRICE,
+	 	billTicket.NUMBER,
+	 	billTicket.BUY_TICKET_PRICE,
+	 	billTicket.SELL_TICKET_PRICE,
+	 	billTicket.FREIGHT,
+	 	billTicket.PROFIT,
+		billShoes.SELL_STATUS,
+		billTicket.EFFECT_FLAG,
+	 	billTicket.CREATE_TIME,
+	 	billTicket.UPDATE_TIME,
+	 	billTicket.MEMO,
+	</trim>
+</sql>
+
+<!-- *************************************自定义接口***************************************************** -->
+
+</mapper>   
